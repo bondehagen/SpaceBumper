@@ -1,0 +1,13 @@
+﻿# The port used to connect the AI's
+Port 1986
+
+# The path to the map
+Map "Maps/Map2.txt"
+
+# The type of players separated by linebreak (Limited to 4, the rest is ignored)
+# 'Human' is controlled by wasd og the arrows
+# 'AI' is connected over TCP/IP
+Human
+AI
+Test
+Test
