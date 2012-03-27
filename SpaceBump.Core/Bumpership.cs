@@ -15,6 +15,8 @@ namespace SpaceBumper
         private readonly World world;
         private Bumpership lastcollider;
         private Vector oldPosition;
+        private Vector acceleration;
+
 
         public Bumpership(IInputHandler input, World world, object shape, string name, Vector spawnPosition)
         {
@@ -59,12 +61,17 @@ namespace SpaceBumper
             if (strength > 1.0)
                 acceleration.Normalize();
 
-            Velocity += acceleration * factor1;
+            this.acceleration = acceleration;
         }
 
         public void Update(int iterations)
         {
             input.Update(iterations, world, this);
+
+            if (!acceleration.IsValid())
+                acceleration = new Vector(0, 0);
+
+            Velocity += acceleration * factor1;
 
             Velocity *= 0.97;
 

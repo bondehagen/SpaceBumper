@@ -10,21 +10,14 @@ namespace SpaceBumper
             return source.X * vector.X + source.Y * vector.Y;
         }
 
-        public static void Zero(this Vector vector)
-        {
-            vector.X = 0;
-            vector.Y = 0;
-        }
-
         public static Vector Clone(this Vector vector)
         {
             return new Vector(vector.X, vector.Y);
         }
 
-        public static void Validate(this Vector vector)
+        public static bool IsValid(this Vector vector)
         {
-            if (double.IsNaN(vector.X + vector.Y))
-                vector.Zero();
+            return !double.IsNaN(vector.X + vector.Y);
         }
 
         public static double GetAngle(this Vector vector)

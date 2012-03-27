@@ -27,7 +27,6 @@ namespace SpaceBumper
 
         public void Dispose()
         {
-            
         }
     }
 }
