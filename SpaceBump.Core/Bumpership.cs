@@ -55,9 +55,6 @@ namespace SpaceBumper
             // The strength is calculated as sqrt(x*x+y*y)
             double strength = acceleration.Length;
 
-            if (strength == 0)
-                return;
-
             if (strength > 1.0)
                 acceleration.Normalize();
 
