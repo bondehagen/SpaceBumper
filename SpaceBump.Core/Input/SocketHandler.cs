@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Net.Sockets;
@@ -13,7 +15,7 @@ namespace SpaceBumper
     {
         private const int bufferSize = 256;
         private readonly TcpClient client;
-        private readonly Queue<string> commandQueue;
+        private readonly ConcurrentQueue<string> commandQueue;
         private readonly byte[] data;
         private readonly NetworkStream netStream;
         private bool disposed;
@@ -23,7 +25,7 @@ namespace SpaceBumper
 
         public SocketHandler(TcpClient client)
         {
-            commandQueue = new Queue<string>();
+            commandQueue = new ConcurrentQueue<string>();
             this.client = client;
             data = new byte[bufferSize];
             netStream = this.client.GetStream();
@@ -48,9 +50,13 @@ namespace SpaceBumper
                 iteration
             };
 
-            while (commandQueue.Any())
+            string messageReceived;
+            while (commandQueue.TryDequeue(out messageReceived))
             {
-                ParseMessage(commandQueue.Dequeue(), bumpership);
+                if(messageReceived == null)
+                    continue;
+
+                ParseMessage(messageReceived, bumpership);
             }
         }
 
@@ -124,12 +130,15 @@ namespace SpaceBumper
         {
             try
             {
-                if (!client.Connected && !netStream.CanRead)
+                if (!IsConnected())
+                {
+                    Dispose();
                     return;
+                }
 
                 int bufferLength = netStream.EndRead(ar);
                 string messageReceived = Encoding.ASCII.GetString(data, 0, bufferLength);
-                if (!messageReceived.IsNullOrWhiteSpace())
+                if (!messageReceived.IsNullOrWhiteSpace() && commandQueue.Count < 5)
                 {
                     commandQueue.Enqueue(messageReceived);
                     CheckForNameMessage(messageReceived);
@@ -145,6 +154,9 @@ namespace SpaceBumper
 
         private void CheckForNameMessage(string messageReceived)
         {
+            if (!messageReceived.StartsWith("NAME", StringComparison.InvariantCultureIgnoreCase))
+                return;
+            
             string[] message = messageReceived.Split(separators, StringSplitOptions.RemoveEmptyEntries);
             KeyValuePair<string, string> pair = GetLines(message).FirstOrDefault(l => l.Key.Equals("NAME"));
             if (!pair.Equals(default(KeyValuePair<string, string>)))
@@ -193,6 +205,12 @@ namespace SpaceBumper
 
         public void SendMessage(string message)
         {
+            if (!IsConnected())
+            {
+                Dispose();
+                return;
+            }
+
             try
             {
                 byte[] bytesToSend = Encoding.ASCII.GetBytes(message);
