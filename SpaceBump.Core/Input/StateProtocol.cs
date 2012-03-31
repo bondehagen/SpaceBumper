@@ -16,9 +16,13 @@ namespace SpaceBumper
             foreach (Bumpership bumpership in world.Bumperships)
                 builder.AppendLine(BumpershipLine(bumpership));
 
-            foreach (Cell cell in world.Map.Grid.Cast<Cell>().Where(c => c.CellType == CellType.Attractor))
-                builder.AppendLine("STAR " + ConvertToString(cell.Position));
+            foreach (Cell cell in world.Map.Grid)
+            {
+                if (cell.CellType != CellType.Attractor)
+                    continue;
 
+                builder.AppendLine("STAR " + ConvertToString(cell.Position));
+            }
             builder.AppendLine(EndStateLine());
             return builder.ToString();
         }
